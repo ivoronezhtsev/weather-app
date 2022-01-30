@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onFailure(call: Call<Weather>, t: Throwable) {
-                temp.text = t.message
+                temp.text = "Error"
             }
         })
     }
