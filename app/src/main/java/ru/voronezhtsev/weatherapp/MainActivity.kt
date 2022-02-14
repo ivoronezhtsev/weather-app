@@ -16,30 +16,34 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val temp = findViewById<TextView>(R.id.temp)
         val weatherService = Retrofit.Builder()
             .baseUrl("https://api.openweathermap.org")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(WeatherService::class.java)
-        weatherService.load().enqueue(object : Callback<WeatherResponse> {
-            override fun onResponse(
-                call: Call<WeatherResponse>,
-                response: Response<WeatherResponse>
-            ) {
-                if (response.isSuccessful) {
-                    response.body()?.weather?.get(0)?.icon?.let {
-                        findViewById<ImageView>(R.id.icon).setBackgroundResource(getIcon(it))
-                    }
-                    temp.text = response.body()?.main?.temp?.minus(273.15)?.roundToInt().toString()
-                    findViewById<TextView>(R.id.city_name).text = response.body()?.name
-                }
-            }
 
-            override fun onFailure(call: Call<WeatherResponse>, t: Throwable) {
+        val model: WeatherViewModel = ViewModelProvider(this,
+            WeatherViewModelFactory(weatherService))[WeatherViewModel::class.java]
+        val temp = findViewById<TextView>(R.id.temp)
+        val description = findViewById<TextView>(R.id.description)
+        /*val db = Room.databaseBuilder(
+            applicationContext,
+            WeatherDatabase::class.java, "weather-db"
+        )
+            .allowMainThreadQueries() //todo Убрать
+            .build()*/
+        //val weather = db.weatherDao().getAll()
+        model.weatherLiveData.observe(this) {
+            if (it != null) {
+                findViewById<ImageView>(R.id.icon).setBackgroundResource(getIcon(it.weather[0].icon))
+                description.text = it.weather[0].description
+                temp.text =
+                    it.main.temp.minus(273.15).roundToInt().toString()
+                findViewById<TextView>(R.id.city_name).text = it.name
+            } else {
                 temp.text = getString(R.string.error)
             }
-        })
+        }
     }
 
     private fun getIcon(code: String): Int {
