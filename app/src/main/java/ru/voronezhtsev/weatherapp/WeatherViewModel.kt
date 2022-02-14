@@ -7,8 +7,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import ru.voronezhtsev.weatherapp.db.WeatherDatabase
 
-class WeatherViewModel(private val weatherService: WeatherService,
-                       private val weatherDatabase: WeatherDatabase) : ViewModel() {
+class WeatherViewModel(private val weatherService: WeatherService) : ViewModel() {
     val weatherLiveData: MutableLiveData<WeatherResponse?> by lazy {
         MutableLiveData<WeatherResponse?>().also {
             loadWeather()
