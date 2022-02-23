@@ -5,8 +5,10 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.room.Room
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import ru.voronezhtsev.weatherapp.db.WeatherDatabase
 import kotlin.math.roundToInt
 
 
@@ -14,30 +16,34 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        //region dependencies
         val weatherService = Retrofit.Builder()
             .baseUrl("https://api.openweathermap.org")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(WeatherService::class.java)
-
-        val model: WeatherViewModel = ViewModelProvider(this,
-            WeatherViewModelFactory(weatherService))[WeatherViewModel::class.java]
-        val temp = findViewById<TextView>(R.id.temp)
-        val description = findViewById<TextView>(R.id.description)
-        /*val db = Room.databaseBuilder(
+        val db = Room.databaseBuilder(
             applicationContext,
             WeatherDatabase::class.java, "weather-db"
         )
             .allowMainThreadQueries() //todo Убрать
-            .build()*/
-        //val weather = db.weatherDao().getAll()
-        model.weatherLiveData.observe(this) {
+            .build()
+        //endregion
+        val model = ViewModelProvider(
+            this,
+            WeatherViewModelFactory(weatherService, db)
+        )[WeatherViewModel::class.java]
+        val temp = findViewById<TextView>(R.id.temp)
+        val description = findViewById<TextView>(R.id.description)
+
+        model.getWeather().observe(this) {
             if (it != null) {
-                findViewById<ImageView>(R.id.icon).setBackgroundResource(getIcon(it.weather[0].icon))
-                description.text = it.weather[0].description
+                findViewById<ImageView>(R.id.icon).setBackgroundResource(getIcon(it.icon))
+                description.text = it.description
                 temp.text =
-                    it.main.temp.minus(273.15).roundToInt().toString()
+                    it.temp.minus(273.15).roundToInt().toString()
                 findViewById<TextView>(R.id.city_name).text = it.name
+                findViewById<TextView>(R.id.weather_date).text = it.dateTime
             } else {
                 temp.text = getString(R.string.error)
             }

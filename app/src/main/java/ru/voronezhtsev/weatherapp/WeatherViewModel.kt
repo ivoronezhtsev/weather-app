@@ -5,35 +5,44 @@ import androidx.lifecycle.ViewModel
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import ru.voronezhtsev.weatherapp.db.Weather
 import ru.voronezhtsev.weatherapp.db.WeatherDatabase
+import java.util.*
 
-class WeatherViewModel(private val weatherService: WeatherService) : ViewModel() {
-    val weatherLiveData: MutableLiveData<WeatherResponse?> by lazy {
-        MutableLiveData<WeatherResponse?>().also {
-            loadWeather()
-        }
-    }
+class WeatherViewModel(
+    private val weatherService: WeatherService,
+    private val weatherDatabase: WeatherDatabase
+) : ViewModel() {
+    private lateinit var weatherLiveData: MutableLiveData<Weather?>
 
-    private fun loadWeather() {
-        weatherService.load().enqueue(object : Callback<WeatherResponse?> {
-            override fun onResponse(
-                call: Call<WeatherResponse?>,
-                response: Response<WeatherResponse?>
-            ) {
-                if (response.isSuccessful) {
-                    weatherLiveData.value = response.body()
-                    /*response.body()?.let {
-                        weatherDatabase.weatherDao().insertAll(
-                            Weather(1, it.main.temp,
-                                it.weather[0].icon, it.weather[0].description, Date().toString())
-                        )
-                    }*/
+    fun getWeather(): MutableLiveData<Weather?> {
+        val weatherFromDb = weatherDatabase.weatherDao().find()
+
+        if (weatherFromDb == null) {
+            weatherService.load().enqueue(object : Callback<WeatherResponse?> {
+                override fun onResponse(
+                    call: Call<WeatherResponse?>,
+                    response: Response<WeatherResponse?>
+                ) {
+                    if (response.isSuccessful) {
+                        response.body()?.let {
+                            val weather = Weather(
+                                1, it.name, it.main.temp,
+                                it.weather[0].icon, it.weather[0].description, Date().toString()
+                            )
+                            weatherDatabase.weatherDao().insertAll(weather)
+                            weatherLiveData = MutableLiveData(weather)
+                        }
+                    }
                 }
-            }
 
-            override fun onFailure(call: Call<WeatherResponse?>, t: Throwable) {
-                weatherLiveData.value = null
-            }
-        })
+                override fun onFailure(call: Call<WeatherResponse?>, t: Throwable) {
+                    weatherLiveData = MutableLiveData(null)
+                }
+            })
+        } else {
+            weatherLiveData = MutableLiveData(weatherFromDb)
+        }
+        return weatherLiveData
     }
 }
