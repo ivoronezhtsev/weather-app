@@ -1,53 +1,75 @@
 package ru.voronezhtsev.weatherapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import androidx.room.Room
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import ru.voronezhtsev.weatherapp.Constants.PENDING_INTENT_NAME
+import ru.voronezhtsev.weatherapp.Constants.UPDATE_WEATHER_EVENT
+import ru.voronezhtsev.weatherapp.db.Weather
 import ru.voronezhtsev.weatherapp.db.WeatherDatabase
+import javax.inject.Inject
 import kotlin.math.roundToInt
 
+object Constants {
+    const val PENDING_INTENT_NAME = "pendingIntent"
+    const val UPDATE_WEATHER_EVENT = 1
+    const val UPDATE_TIME_MS = 10000L
+}
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var startServiceIntent: Intent
+    @Inject
+    lateinit var weatherService: WeatherService
+    @Inject
+    lateinit var database: WeatherDatabase
+    private val updateWeatherRequestCode = 1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        //region dependencies
-        val weatherService = Retrofit.Builder()
-            .baseUrl("https://api.openweathermap.org")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(WeatherService::class.java)
-        val db = Room.databaseBuilder(
-            applicationContext,
-            WeatherDatabase::class.java, "weather-db"
-        )
-            .allowMainThreadQueries() //todo Убрать
-            .build()
-        //endregion
+        (application as Application).component.inject(this)
+
         val model = ViewModelProvider(
             this,
-            WeatherViewModelFactory(weatherService, db)
+            WeatherViewModelFactory(weatherService, database)
         )[WeatherViewModel::class.java]
-        val temp = findViewById<TextView>(R.id.temp)
-        val description = findViewById<TextView>(R.id.description)
+        val pendingIntent = createPendingResult(updateWeatherRequestCode, Intent(), 0)
+        startServiceIntent = Intent(this, UpdateService::class.java)
+        startServiceIntent.putExtra(PENDING_INTENT_NAME, pendingIntent)
+        startService(startServiceIntent)
 
         model.getWeather().observe(this) {
-            if (it != null) {
-                findViewById<ImageView>(R.id.icon).setBackgroundResource(getIcon(it.icon))
-                description.text = it.description
-                temp.text =
-                    it.temp.minus(273.15).roundToInt().toString()
-                findViewById<TextView>(R.id.city_name).text = it.name
-                findViewById<TextView>(R.id.weather_date).text = it.dateTime
-            } else {
-                temp.text = getString(R.string.error)
-            }
+            setWeather(it)
         }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == updateWeatherRequestCode && resultCode == UPDATE_WEATHER_EVENT) {
+            database.weatherDao().find()?.let { setWeather(it) }
+        }
+    }
+
+    private fun setWeather(weather: Weather?) {
+        val tempTv = findViewById<TextView>(R.id.temp)
+        if (weather != null) {
+            findViewById<ImageView>(R.id.icon).setBackgroundResource(getIcon(weather.icon))
+            findViewById<TextView>(R.id.description).text = weather.description
+            tempTv.text =
+                weather.temp.minus(273.15).roundToInt().toString()
+            findViewById<TextView>(R.id.city_name).text = weather.name
+            findViewById<TextView>(R.id.weather_date).text = weather.dateTime
+        } else {
+            tempTv.text = getString(R.string.error)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopService(startServiceIntent)
     }
 
     private fun getIcon(code: String): Int {
