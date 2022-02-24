@@ -13,7 +13,7 @@ class WeatherViewModel(
     private val weatherService: WeatherService,
     private val weatherDatabase: WeatherDatabase
 ) : ViewModel() {
-    private lateinit var weatherLiveData: MutableLiveData<Weather?>
+    private val weatherLiveData: MutableLiveData<Weather?> = MutableLiveData()
 
     fun getWeather(): MutableLiveData<Weather?> {
         val weatherFromDb = weatherDatabase.weatherDao().find()
@@ -31,17 +31,17 @@ class WeatherViewModel(
                                 it.weather[0].icon, it.weather[0].description, Date().toString()
                             )
                             weatherDatabase.weatherDao().insertAll(weather)
-                            weatherLiveData = MutableLiveData(weather)
+                            weatherLiveData.value = weather
                         }
                     }
                 }
 
                 override fun onFailure(call: Call<WeatherResponse?>, t: Throwable) {
-                    weatherLiveData = MutableLiveData(null)
+                    weatherLiveData.value = null
                 }
             })
         } else {
-            weatherLiveData = MutableLiveData(weatherFromDb)
+            weatherLiveData.value = weatherFromDb
         }
         return weatherLiveData
     }
