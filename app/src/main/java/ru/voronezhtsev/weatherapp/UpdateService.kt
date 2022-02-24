@@ -11,7 +11,6 @@ import retrofit2.Response
 import ru.voronezhtsev.weatherapp.Constants.PENDING_INTENT_NAME
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_WEATHER_EVENT
 import ru.voronezhtsev.weatherapp.db.Weather
-import ru.voronezhtsev.weatherapp.db.WeatherDatabase
 import java.util.*
 import javax.inject.Inject
 
@@ -21,14 +20,14 @@ class UpdateService : Service() {
     @Inject
     lateinit var weatherService: WeatherService
     @Inject
-    lateinit var database: WeatherDatabase
+    lateinit var weatherRepository: WeatherRepository
     override fun onCreate() {
         super.onCreate()
         (application as Application).component.inject(this)
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        return null;
+        return null
     }
 
     private val tag = "UpdateService"
@@ -64,7 +63,7 @@ class UpdateService : Service() {
                                 it.weather[0].icon, it.weather[0].description, Date().toString()
                             )
                             pendingIntent?.send(UPDATE_WEATHER_EVENT)
-                            database.weatherDao().insertAll(weather)
+                            weatherRepository.save(weather)
                         }
                     }
                 }

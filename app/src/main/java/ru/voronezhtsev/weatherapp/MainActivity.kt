@@ -5,11 +5,9 @@ import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
 import ru.voronezhtsev.weatherapp.Constants.PENDING_INTENT_NAME
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_WEATHER_EVENT
 import ru.voronezhtsev.weatherapp.db.Weather
-import ru.voronezhtsev.weatherapp.db.WeatherDatabase
 import javax.inject.Inject
 import kotlin.math.roundToInt
 
@@ -21,10 +19,9 @@ object Constants {
 
 class MainActivity : AppCompatActivity() {
     private lateinit var startServiceIntent: Intent
+
     @Inject
-    lateinit var weatherService: WeatherService
-    @Inject
-    lateinit var database: WeatherDatabase
+    lateinit var weatherRepository: WeatherRepository
     private val updateWeatherRequestCode = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,24 +29,18 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         (application as Application).component.inject(this)
 
-        val model = ViewModelProvider(
-            this,
-            WeatherViewModelFactory(weatherService, database)
-        )[WeatherViewModel::class.java]
         val pendingIntent = createPendingResult(updateWeatherRequestCode, Intent(), 0)
         startServiceIntent = Intent(this, UpdateService::class.java)
         startServiceIntent.putExtra(PENDING_INTENT_NAME, pendingIntent)
         startService(startServiceIntent)
-
-        model.getWeather().observe(this) {
-            setWeather(it)
-        }
+        setWeather(weatherRepository.updateAndGet())
     }
 
+    //todo Устарел, гуглить новый способ оповещения активити при изменении данных сервисом
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == updateWeatherRequestCode && resultCode == UPDATE_WEATHER_EVENT) {
-            database.weatherDao().find()?.let { setWeather(it) }
+            setWeather(weatherRepository.getFromDb())
         }
     }
 

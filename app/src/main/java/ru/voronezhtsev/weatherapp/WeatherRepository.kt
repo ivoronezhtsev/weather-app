@@ -1,7 +1,5 @@
 package ru.voronezhtsev.weatherapp
 
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -9,15 +7,13 @@ import ru.voronezhtsev.weatherapp.db.Weather
 import ru.voronezhtsev.weatherapp.db.WeatherDatabase
 import java.util.*
 
-class WeatherViewModel(
+class WeatherRepository(
     private val weatherService: WeatherService,
     private val weatherDatabase: WeatherDatabase
-) : ViewModel() {
-    private val weatherLiveData: MutableLiveData<Weather?> = MutableLiveData()
-
-    fun getWeather(): MutableLiveData<Weather?> {
+) {
+    fun updateAndGet(): Weather? {
         val weatherFromDb = weatherDatabase.weatherDao().find()
-
+        var result = weatherFromDb
         if (weatherFromDb == null) {
             weatherService.load().enqueue(object : Callback<WeatherResponse?> {
                 override fun onResponse(
@@ -30,19 +26,27 @@ class WeatherViewModel(
                                 1, it.name, it.main.temp,
                                 it.weather[0].icon, it.weather[0].description, Date().toString()
                             )
+                            result = weather
                             weatherDatabase.weatherDao().insertAll(weather)
-                            weatherLiveData.value = weather
                         }
                     }
                 }
 
                 override fun onFailure(call: Call<WeatherResponse?>, t: Throwable) {
-                    weatherLiveData.value = null
+                    result = null
                 }
             })
+            return result
         } else {
-            weatherLiveData.value = weatherFromDb
+            return weatherFromDb
         }
-        return weatherLiveData
+    }
+
+    fun getFromDb(): Weather? {
+        return weatherDatabase.weatherDao().find()
+    }
+
+    fun save(weather: Weather) {
+        weatherDatabase.weatherDao().insertAll(weather)
     }
 }
