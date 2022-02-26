@@ -69,13 +69,13 @@ class MainActivity : AppCompatActivity() {
         when (code) {
             "01n" -> return R.drawable.ic_01n
             "02n" -> return R.drawable.ic_02n
-            "03n" -> return R.drawable.ic_03n
-            "04n" -> return R.drawable.ic_04n
-            "09n" -> return R.drawable.ic_09n
+            "03n" -> return R.drawable.ic_03d
+            "04n" -> return R.drawable.ic_04d
+            "09n" -> return R.drawable.ic_09d
             "10n" -> return R.drawable.ic_10n
             "11n" -> return R.drawable.ic_11n
-            "13n" -> return R.drawable.ic_13n
-            "50n" -> return R.drawable.ic_50n
+            "13n" -> return R.drawable.ic_13d
+            "50n" -> return R.drawable.ic_50d
             "01d" -> return R.drawable.ic_01d
             "02d" -> return R.drawable.ic_02d
             "03d" -> return R.drawable.ic_03d
@@ -85,7 +85,6 @@ class MainActivity : AppCompatActivity() {
             "11d" -> return R.drawable.ic_11d
             "13d" -> return R.drawable.ic_13d
             "50d" -> return R.drawable.ic_50d
-            //todo Некоторые иконки дублируют друг друга
         }
         return R.drawable.ic_01d //todo Заглушка иконки
     }
