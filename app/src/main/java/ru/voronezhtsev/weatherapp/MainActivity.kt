@@ -41,6 +41,9 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        weatherDatabase.weatherDao().find()?.let {
+            setWeather(it)
+        }
         registerReceiver(broadcastReceiver, IntentFilter(UPDATE_ACTION))
         startService(startServiceIntent)
     }
