@@ -17,8 +17,8 @@ import kotlin.math.roundToInt
 
 object Constants {
     const val UPDATE_TIME_MS = 10000L
-    val NULL_WEATHER = Weather(1, "", 0.0, "", "", "")
     const val UPDATE_ACTION = "ru.voronezhtsev.weatherapp.action.update"
+    val NULL_WEATHER = Weather(1, "", 0.0, "", "", "")
 }
 
 class MainActivity : AppCompatActivity() {
