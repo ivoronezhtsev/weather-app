@@ -5,9 +5,12 @@ import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import ru.voronezhtsev.weatherapp.Constants.NULL_WEATHER
 import ru.voronezhtsev.weatherapp.Constants.PENDING_INTENT_NAME
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_WEATHER_EVENT
 import ru.voronezhtsev.weatherapp.db.Weather
+import ru.voronezhtsev.weatherapp.db.WeatherDao
+import ru.voronezhtsev.weatherapp.db.WeatherDatabase
 import javax.inject.Inject
 import kotlin.math.roundToInt
 
@@ -15,13 +18,14 @@ object Constants {
     const val PENDING_INTENT_NAME = "pendingIntent"
     const val UPDATE_WEATHER_EVENT = 1
     const val UPDATE_TIME_MS = 10000L
+    val NULL_WEATHER = Weather(1, "", 0.0, "", "", "")
 }
 
 class MainActivity : AppCompatActivity() {
     private lateinit var startServiceIntent: Intent
 
     @Inject
-    lateinit var weatherRepository: WeatherRepository
+    lateinit var weatherDatabase: WeatherDatabase
     private val updateWeatherRequestCode = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,22 +37,21 @@ class MainActivity : AppCompatActivity() {
         startServiceIntent = Intent(this, UpdateService::class.java)
         startServiceIntent.putExtra(PENDING_INTENT_NAME, pendingIntent)
         startService(startServiceIntent)
-        setWeather(weatherRepository.updateAndGet())
     }
 
     //todo Устарел, гуглить новый способ оповещения активити при изменении данных сервисом
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == updateWeatherRequestCode && resultCode == UPDATE_WEATHER_EVENT) {
-            setWeather(weatherRepository.getFromDb())
+            weatherDatabase.weatherDao().find()?.let { setWeather(it) }
         }
     }
 
-    private fun setWeather(weather: Weather?) {
+    private fun setWeather(weather: Weather) {
         val tempTv = findViewById<TextView>(R.id.temp)
-        if (weather != null) {
+        if (weather != NULL_WEATHER) {
             findViewById<ImageView>(R.id.icon).setBackgroundResource(getIcon(weather.icon))
-            findViewById<TextView>(R.id.description).text = weather.description
+            findViewById<TextView>(R.id.description).text = weather?.description
             tempTv.text =
                 weather.temp.minus(273.15).roundToInt().toString()
             findViewById<TextView>(R.id.city_name).text = weather.name

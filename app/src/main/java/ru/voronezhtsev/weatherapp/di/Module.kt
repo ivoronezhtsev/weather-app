@@ -6,7 +6,6 @@ import dagger.Module
 import dagger.Provides
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import ru.voronezhtsev.weatherapp.WeatherRepository
 import ru.voronezhtsev.weatherapp.WeatherService
 import ru.voronezhtsev.weatherapp.db.WeatherDatabase
 
@@ -28,11 +27,5 @@ class Module(private val context: Context) {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(WeatherService::class.java)
-    }
-
-    @Provides
-    fun provideWeatherRepository(weatherService: WeatherService, weatherDatabase: WeatherDatabase):
-            WeatherRepository {
-        return WeatherRepository(weatherService, weatherDatabase)
     }
 }

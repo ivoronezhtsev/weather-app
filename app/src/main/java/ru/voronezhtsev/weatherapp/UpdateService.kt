@@ -4,23 +4,27 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import ru.voronezhtsev.weatherapp.Constants.NULL_WEATHER
 import ru.voronezhtsev.weatherapp.Constants.PENDING_INTENT_NAME
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_WEATHER_EVENT
 import ru.voronezhtsev.weatherapp.db.Weather
+import ru.voronezhtsev.weatherapp.db.WeatherDatabase
 import java.util.*
 import javax.inject.Inject
 
 class UpdateService : Service() {
     private lateinit var thread: Thread
     private var pendingIntent: PendingIntent? = null
+
     @Inject
     lateinit var weatherService: WeatherService
+
     @Inject
-    lateinit var weatherRepository: WeatherRepository
+    lateinit var weatherDatabase: WeatherDatabase
+
     override fun onCreate() {
         super.onCreate()
         (application as Application).component.inject(this)
@@ -30,11 +34,10 @@ class UpdateService : Service() {
         return null
     }
 
-    private val tag = "UpdateService"
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d(tag, "onStartCommand")
-        thread = Thread { update() }
+        thread = Thread {
+            update()
+        }
         thread.start()
         intent?.let {
             pendingIntent = it.getParcelableExtra(PENDING_INTENT_NAME)
@@ -44,13 +47,11 @@ class UpdateService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(tag, "onDestroy")
         thread.interrupt()
     }
 
     private fun update() {
         while (!Thread.currentThread().isInterrupted) {
-            Log.d(tag, "update")
             weatherService.load().enqueue(object : Callback<WeatherResponse?> {
                 override fun onResponse(
                     call: Call<WeatherResponse?>,
@@ -62,25 +63,25 @@ class UpdateService : Service() {
                                 1, it.name, it.main.temp,
                                 it.weather[0].icon, it.weather[0].description, Date().toString()
                             )
+                            weatherDatabase.weatherDao().insertAll(weather)
                             pendingIntent?.send(UPDATE_WEATHER_EVENT)
-                            weatherRepository.save(weather)
                         }
+                    } else {
+                        weatherDatabase.weatherDao().insertAll(NULL_WEATHER)
+                        pendingIntent?.send(UPDATE_WEATHER_EVENT)
                     }
                 }
 
                 override fun onFailure(call: Call<WeatherResponse?>, t: Throwable) {
-                    // В случае ошибки в БД ничего не пишем
-                    //todo Мб оповещать тоже не стоит?
+                    weatherDatabase.weatherDao().insertAll(NULL_WEATHER)
                     pendingIntent?.send(UPDATE_WEATHER_EVENT)
                 }
             })
             try {
                 Thread.sleep(Constants.UPDATE_TIME_MS)
             } catch (e: InterruptedException) {
-                Log.d(tag, "interrupt")
                 Thread.currentThread().interrupt()
             }
         }
-        stopSelf() //todo Не знаю надо ли
     }
 }
