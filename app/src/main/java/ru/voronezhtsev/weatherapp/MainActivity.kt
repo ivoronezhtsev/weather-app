@@ -1,49 +1,48 @@
 package ru.voronezhtsev.weatherapp
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import ru.voronezhtsev.weatherapp.Constants.NULL_WEATHER
-import ru.voronezhtsev.weatherapp.Constants.PENDING_INTENT_NAME
-import ru.voronezhtsev.weatherapp.Constants.UPDATE_WEATHER_EVENT
+import ru.voronezhtsev.weatherapp.Constants.UPDATE_ACTION
 import ru.voronezhtsev.weatherapp.db.Weather
 import ru.voronezhtsev.weatherapp.db.WeatherDatabase
 import javax.inject.Inject
 import kotlin.math.roundToInt
 
 object Constants {
-    const val PENDING_INTENT_NAME = "pendingIntent"
-    const val UPDATE_WEATHER_EVENT = 1
     const val UPDATE_TIME_MS = 10000L
     val NULL_WEATHER = Weather(1, "", 0.0, "", "", "")
+    const val UPDATE_ACTION = "ru.voronezhtsev.weatherapp.action.update"
 }
 
 class MainActivity : AppCompatActivity() {
     private lateinit var startServiceIntent: Intent
+    private lateinit var broadcastReceiver: BroadcastReceiver
 
     @Inject
     lateinit var weatherDatabase: WeatherDatabase
-    private val updateWeatherRequestCode = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         (application as Application).component.inject(this)
 
-        val pendingIntent = createPendingResult(updateWeatherRequestCode, Intent(), 0)
         startServiceIntent = Intent(this, UpdateService::class.java)
-        startServiceIntent.putExtra(PENDING_INTENT_NAME, pendingIntent)
-        startService(startServiceIntent)
-    }
-
-    //todo Устарел надо BroadcastReceiver использовать
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == updateWeatherRequestCode && resultCode == UPDATE_WEATHER_EVENT) {
-            weatherDatabase.weatherDao().find()?.let { setWeather(it) }
+        broadcastReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                weatherDatabase.weatherDao().find()?.let {
+                    setWeather(it)
+                }
+            }
         }
+        registerReceiver(broadcastReceiver, IntentFilter(UPDATE_ACTION))
+        startService(startServiceIntent)
     }
 
     private fun setWeather(weather: Weather) {
@@ -62,6 +61,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        unregisterReceiver(broadcastReceiver)
         stopService(startServiceIntent)
     }
 

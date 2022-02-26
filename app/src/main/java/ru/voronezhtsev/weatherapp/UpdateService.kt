@@ -1,6 +1,5 @@
 package ru.voronezhtsev.weatherapp
 
-import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
@@ -8,8 +7,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import ru.voronezhtsev.weatherapp.Constants.NULL_WEATHER
-import ru.voronezhtsev.weatherapp.Constants.PENDING_INTENT_NAME
-import ru.voronezhtsev.weatherapp.Constants.UPDATE_WEATHER_EVENT
+import ru.voronezhtsev.weatherapp.Constants.UPDATE_ACTION
 import ru.voronezhtsev.weatherapp.db.Weather
 import ru.voronezhtsev.weatherapp.db.WeatherDatabase
 import java.util.*
@@ -17,7 +15,6 @@ import javax.inject.Inject
 
 class UpdateService : Service() {
     private lateinit var thread: Thread
-    private var pendingIntent: PendingIntent? = null
 
     @Inject
     lateinit var weatherService: WeatherService
@@ -39,9 +36,6 @@ class UpdateService : Service() {
             update()
         }
         thread.start()
-        intent?.let {
-            pendingIntent = it.getParcelableExtra(PENDING_INTENT_NAME)
-        }
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -51,6 +45,7 @@ class UpdateService : Service() {
     }
 
     private fun update() {
+        val intent = Intent(UPDATE_ACTION)
         while (!Thread.currentThread().isInterrupted) {
             weatherService.load().enqueue(object : Callback<WeatherResponse?> {
                 override fun onResponse(
@@ -64,17 +59,17 @@ class UpdateService : Service() {
                                 it.weather[0].icon, it.weather[0].description, Date().toString()
                             )
                             weatherDatabase.weatherDao().insertAll(weather)
-                            pendingIntent?.send(UPDATE_WEATHER_EVENT)
+
                         }
                     } else {
                         weatherDatabase.weatherDao().insertAll(NULL_WEATHER)
-                        pendingIntent?.send(UPDATE_WEATHER_EVENT)
                     }
+                    sendBroadcast(intent)
                 }
 
                 override fun onFailure(call: Call<WeatherResponse?>, t: Throwable) {
                     weatherDatabase.weatherDao().insertAll(NULL_WEATHER)
-                    pendingIntent?.send(UPDATE_WEATHER_EVENT)
+                    sendBroadcast(intent)
                 }
             })
             try {
