@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
         startService(startServiceIntent)
     }
 
-    //todo Устарел, гуглить новый способ оповещения активити при изменении данных сервисом
+    //todo Устарел надо BroadcastReceiver использовать
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == updateWeatherRequestCode && resultCode == UPDATE_WEATHER_EVENT) {
@@ -86,6 +86,6 @@ class MainActivity : AppCompatActivity() {
             "13d" -> return R.drawable.ic_13d
             "50d" -> return R.drawable.ic_50d
         }
-        return R.drawable.ic_01d //todo Заглушка иконки
+        return R.drawable.ic_01d //todo Заглушка иконки на случай ошибки
     }
 }
