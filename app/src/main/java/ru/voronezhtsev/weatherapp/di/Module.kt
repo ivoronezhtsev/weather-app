@@ -16,7 +16,6 @@ class Module(private val context: Context) {
     fun provideWeatherDatabase(): WeatherDatabase {
         return Room
             .databaseBuilder(context, WeatherDatabase::class.java, "weather-db")
-            .allowMainThreadQueries() //todo Убрать?
             .build()
     }
 

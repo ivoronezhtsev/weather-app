@@ -8,6 +8,10 @@ import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import ru.voronezhtsev.weatherapp.Constants.NULL_WEATHER
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_ACTION
 import ru.voronezhtsev.weatherapp.db.Weather
@@ -28,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var weatherDatabase: WeatherDatabase
 
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -36,13 +41,21 @@ class MainActivity : AppCompatActivity() {
         startServiceIntent = Intent(this, UpdateService::class.java)
         broadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
-                weatherDatabase.weatherDao().find()?.let {
-                    setWeather(it)
+                val weather = GlobalScope.async {
+                    return@async weatherDatabase.weatherDao().find()
+                }
+                runBlocking {
+                    weather.await()?.let { setWeather(it) }
                 }
             }
         }
-        weatherDatabase.weatherDao().find()?.let {
-            setWeather(it)
+        runBlocking {
+            val weather = GlobalScope.async {
+                return@async weatherDatabase.weatherDao().find()
+            }
+            weather.await()?.let {
+                setWeather(it)
+            }
         }
         registerReceiver(broadcastReceiver, IntentFilter(UPDATE_ACTION))
         startService(startServiceIntent)

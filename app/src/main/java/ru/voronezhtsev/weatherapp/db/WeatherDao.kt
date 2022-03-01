@@ -10,12 +10,8 @@ import androidx.room.Query
 interface WeatherDao {
 
     @Query("SELECT * FROM weather")
-    fun find(): Weather?
+    suspend fun find(): Weather?
 
     @Insert(onConflict = REPLACE)
-    fun insertAll(vararg weather: Weather)
-
-    @Delete
-    fun delete(weather: Weather)
-
+    suspend fun insert(weather: Weather)
 }

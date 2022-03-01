@@ -3,6 +3,7 @@ package ru.voronezhtsev.weatherapp
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import kotlinx.coroutines.runBlocking
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -58,17 +59,22 @@ class UpdateService : Service() {
                                 1, it.name, it.main.temp,
                                 it.weather[0].icon, it.weather[0].description, Date().toString()
                             )
-                            weatherDatabase.weatherDao().insertAll(weather)
-
+                            runBlocking {
+                                weatherDatabase.weatherDao().insert(weather)
+                            }
                         }
                     } else {
-                        weatherDatabase.weatherDao().insertAll(NULL_WEATHER)
+                        runBlocking {
+                            weatherDatabase.weatherDao().insert(NULL_WEATHER)
+                        }
                     }
                     sendBroadcast(intent)
                 }
 
                 override fun onFailure(call: Call<WeatherResponse?>, t: Throwable) {
-                    weatherDatabase.weatherDao().insertAll(NULL_WEATHER)
+                    runBlocking {
+                        weatherDatabase.weatherDao().insert(NULL_WEATHER)
+                    }
                     sendBroadcast(intent)
                 }
             })
