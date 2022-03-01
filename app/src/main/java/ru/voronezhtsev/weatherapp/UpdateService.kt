@@ -3,19 +3,20 @@ package ru.voronezhtsev.weatherapp
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import ru.voronezhtsev.weatherapp.Constants.NULL_WEATHER
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_ACTION
+import ru.voronezhtsev.weatherapp.Constants.UPDATE_TIME_MS
 import ru.voronezhtsev.weatherapp.db.Weather
 import ru.voronezhtsev.weatherapp.db.WeatherDatabase
 import java.util.*
 import javax.inject.Inject
 
 class UpdateService : Service() {
-    private lateinit var thread: Thread
+    private lateinit var job: Job
 
     @Inject
     lateinit var weatherService: WeatherService
@@ -32,22 +33,22 @@ class UpdateService : Service() {
         return null
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        thread = Thread {
+        job = GlobalScope.launch {
             update()
         }
-        thread.start()
         return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        thread.interrupt()
+        job.cancel()
     }
 
-    private fun update() {
+    private suspend fun update() {
         val intent = Intent(UPDATE_ACTION)
-        while (!Thread.currentThread().isInterrupted) {
+        while (job.isActive) {
             weatherService.load().enqueue(object : Callback<WeatherResponse?> {
                 override fun onResponse(
                     call: Call<WeatherResponse?>,
@@ -78,11 +79,8 @@ class UpdateService : Service() {
                     sendBroadcast(intent)
                 }
             })
-            try {
-                Thread.sleep(Constants.UPDATE_TIME_MS)
-            } catch (e: InterruptedException) {
-                Thread.currentThread().interrupt()
-            }
+            delay(UPDATE_TIME_MS)
         }
+        stopSelf()
     }
 }
