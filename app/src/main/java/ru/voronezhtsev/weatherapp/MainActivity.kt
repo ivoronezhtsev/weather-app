@@ -8,10 +8,7 @@ import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import ru.voronezhtsev.weatherapp.Constants.NULL_WEATHER
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_ACTION
 import ru.voronezhtsev.weatherapp.db.Weather
@@ -49,12 +46,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        runBlocking {
-            val weather = GlobalScope.async {
-                return@async weatherDatabase.weatherDao().find()
-            }
-            weather.await()?.let {
-                setWeather(it)
+        GlobalScope.launch {
+            val weather = weatherDatabase.weatherDao().find()
+            weather?.let {
+                runOnUiThread { setWeather(it) }
             }
         }
         registerReceiver(broadcastReceiver, IntentFilter(UPDATE_ACTION))

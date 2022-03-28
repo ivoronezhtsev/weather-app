@@ -65,14 +65,18 @@ class UpdateService : Service() {
                             }
                         }
                     } else {
-                        runBlocking {
+                        //todo При ошибке(например без интернета) сохраняется в БД
+                        //todo признак ошибки, далее активити вычитывает это
+                        /*runBlocking {
                             weatherDatabase.weatherDao().insert(NULL_WEATHER)
-                        }
+                        }*/
                     }
                     sendBroadcast(intent)
                 }
 
                 override fun onFailure(call: Call<WeatherResponse?>, t: Throwable) {
+                    //todo При ошибке(например без интернета) сохраняется в БД
+                    //todo признак ошибки, далее активити вычитывает это
                     runBlocking {
                         weatherDatabase.weatherDao().insert(NULL_WEATHER)
                     }
