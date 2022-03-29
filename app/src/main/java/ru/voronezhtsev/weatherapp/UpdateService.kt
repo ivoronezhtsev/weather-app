@@ -11,23 +11,12 @@ import ru.voronezhtsev.weatherapp.Constants.NULL_WEATHER
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_ACTION
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_TIME_MS
 import ru.voronezhtsev.weatherapp.db.Weather
-import ru.voronezhtsev.weatherapp.db.WeatherDatabase
 import java.util.*
-import javax.inject.Inject
 
 class UpdateService : Service() {
     private lateinit var job: Job
-
-    @Inject
-    lateinit var weatherService: WeatherService
-
-    @Inject
-    lateinit var weatherDatabase: WeatherDatabase
-
-    override fun onCreate() {
-        super.onCreate()
-        (application as Application).component.inject(this)
-    }
+    private val weatherService = Application.weatherService
+    private val weatherDatabase = Application.weatherDatabase
 
     override fun onBind(intent: Intent?): IBinder? {
         return null

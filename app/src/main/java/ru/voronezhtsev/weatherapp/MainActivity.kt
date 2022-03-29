@@ -12,8 +12,6 @@ import kotlinx.coroutines.*
 import ru.voronezhtsev.weatherapp.Constants.NULL_WEATHER
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_ACTION
 import ru.voronezhtsev.weatherapp.db.Weather
-import ru.voronezhtsev.weatherapp.db.WeatherDatabase
-import javax.inject.Inject
 import kotlin.math.roundToInt
 
 object Constants {
@@ -25,15 +23,12 @@ object Constants {
 class MainActivity : AppCompatActivity() {
     private lateinit var startServiceIntent: Intent
     private lateinit var broadcastReceiver: BroadcastReceiver
-
-    @Inject
-    lateinit var weatherDatabase: WeatherDatabase
+    private val weatherDatabase = Application.weatherDatabase
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        (application as Application).component.inject(this)
 
         startServiceIntent = Intent(this, UpdateService::class.java)
         broadcastReceiver = object : BroadcastReceiver() {
