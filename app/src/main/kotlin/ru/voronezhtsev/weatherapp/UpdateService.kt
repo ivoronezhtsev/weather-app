@@ -7,6 +7,8 @@ import kotlinx.coroutines.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import ru.voronezhtsev.weatherapp.Application.Companion.weatherDatabase
+import ru.voronezhtsev.weatherapp.Application.Companion.weatherService
 import ru.voronezhtsev.weatherapp.Constants.NULL_WEATHER
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_ACTION
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_TIME_MS
@@ -15,8 +17,6 @@ import java.util.*
 
 class UpdateService : Service() {
     private lateinit var job: Job
-    private val weatherService = Application.weatherService
-    private val weatherDatabase = Application.weatherDatabase
 
     override fun onBind(intent: Intent?): IBinder? {
         return null

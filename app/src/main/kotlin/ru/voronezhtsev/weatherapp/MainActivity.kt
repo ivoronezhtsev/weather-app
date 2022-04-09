@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
+import ru.voronezhtsev.weatherapp.Application.Companion.weatherDatabase
 import ru.voronezhtsev.weatherapp.Constants.NULL_WEATHER
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_ACTION
 import ru.voronezhtsev.weatherapp.db.Weather
@@ -23,7 +24,6 @@ object Constants {
 class MainActivity : AppCompatActivity() {
     private lateinit var startServiceIntent: Intent
     private lateinit var broadcastReceiver: BroadcastReceiver
-    private val weatherDatabase = Application.weatherDatabase
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
