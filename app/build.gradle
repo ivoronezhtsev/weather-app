@@ -49,4 +49,5 @@ dependencies {
     implementation "androidx.room:room-ktx:$roomVersion"
     annotationProcessor "androidx.room:room-compiler:$roomVersion"
     kapt("androidx.room:room-compiler:$roomVersion")
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.5.0-alpha06"
 }
