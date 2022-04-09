@@ -11,15 +11,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import ru.voronezhtsev.weatherapp.Application.Companion.weatherDatabase
-import ru.voronezhtsev.weatherapp.Constants.NULL_WEATHER
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_ACTION
 import ru.voronezhtsev.weatherapp.db.Weather
 import kotlin.math.roundToInt
 
 object Constants {
-    const val UPDATE_TIME_MS = 10000L
+    const val UPDATE_TIME_MS = 20000L
     const val UPDATE_ACTION = "ru.voronezhtsev.weatherapp.action.update"
-    val NULL_WEATHER = Weather(1, "", 0.0, "", "", "")
 }
 
 class MainActivity : AppCompatActivity() {
@@ -53,16 +51,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun setWeather(weather: Weather) {
         val tempTv = findViewById<TextView>(R.id.temp)
-        if (weather != NULL_WEATHER) {
-            findViewById<ImageView>(R.id.icon).setBackgroundResource(getIcon(weather.icon))
-            findViewById<TextView>(R.id.description).text = weather.description
-            tempTv.text =
-                weather.temp.minus(273.15).roundToInt().toString()
-            findViewById<TextView>(R.id.city_name).text = weather.name
-            findViewById<TextView>(R.id.weather_date).text = weather.dateTime
-        } else {
-            tempTv.text = getString(R.string.error)
-        }
+        findViewById<ImageView>(R.id.icon).setBackgroundResource(getIcon(weather.icon))
+        findViewById<TextView>(R.id.description).text = weather.description
+        tempTv.text =
+            weather.temp.minus(273.15).roundToInt().toString()
+        findViewById<TextView>(R.id.city_name).text = weather.name
+        findViewById<TextView>(R.id.weather_date).text = weather.dateTime
     }
 
     override fun onDestroy() {
