@@ -13,7 +13,6 @@ import ru.voronezhtsev.weatherapp.db.Weather
 import java.util.*
 
 class UpdateService : Service() {
-
     private var job: Job = Job()
     /**
      * https://kenkyee.medium.com/android-kotlin-coroutine-best-practices-bc033fed62e7
@@ -53,15 +52,12 @@ class UpdateService : Service() {
                         )
                     )
                     sendBroadcast(intent)
-                    Log.i("UpdateService", "sendBroadcast")
                 } catch (e: Exception) {
                     Log.e("UpdateService", "error loading weather: " + e.stackTraceToString())
                 }
             }
             delay(UPDATE_TIME_MS)
-            Log.i("UpdateService", "delay")
         }
         stopSelf()
     }
-
 }
