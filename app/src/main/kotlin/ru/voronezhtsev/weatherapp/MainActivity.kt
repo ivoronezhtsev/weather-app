@@ -21,6 +21,7 @@ object Constants {
 }
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var startServiceIntent: Intent
     private lateinit var broadcastReceiver: BroadcastReceiver
 
@@ -87,4 +88,5 @@ class MainActivity : AppCompatActivity() {
         }
         return R.drawable.ic_01d //todo Заглушка иконки на случай ошибки
     }
+
 }

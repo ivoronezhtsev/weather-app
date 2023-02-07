@@ -13,6 +13,7 @@ import ru.voronezhtsev.weatherapp.db.Weather
 import java.util.*
 
 class UpdateService : Service() {
+
     private var job: Job = Job()
     /**
      * https://kenkyee.medium.com/android-kotlin-coroutine-best-practices-bc033fed62e7
@@ -60,4 +61,5 @@ class UpdateService : Service() {
         }
         stopSelf()
     }
+
 }
