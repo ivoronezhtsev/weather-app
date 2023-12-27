@@ -1,6 +1,5 @@
 package ru.voronezhtsev.weatherapp
 
-import retrofit2.Call
 import retrofit2.http.GET
 
 data class WeatherResponse(val main: Main, val name: String, val weather: List<Weather>)
