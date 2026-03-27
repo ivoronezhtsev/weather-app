@@ -51,4 +51,6 @@ dependencies {
     annotationProcessor "androidx.room:room-compiler:$roomVersion"
     kapt("androidx.room:room-compiler:$roomVersion")
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.5.0-alpha06"
+    implementation("com.google.android.gms:play-services-location:20.0.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:3.12.13")
 }

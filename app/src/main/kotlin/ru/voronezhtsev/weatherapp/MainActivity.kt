@@ -1,14 +1,19 @@
 package ru.voronezhtsev.weatherapp
 
+import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.launch
 import ru.voronezhtsev.weatherapp.Application.Companion.weatherDatabase
 import ru.voronezhtsev.weatherapp.Constants.UPDATE_ACTION
@@ -21,15 +26,17 @@ object Constants {
 }
 
 class MainActivity : AppCompatActivity() {
-
     private lateinit var startServiceIntent: Intent
     private lateinit var broadcastReceiver: BroadcastReceiver
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        getLastLocation()
+
         setContentView(R.layout.activity_main)
 
-        startServiceIntent = Intent(this, UpdateService::class.java)
         broadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 lifecycleScope.launch {
@@ -46,7 +53,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
         registerReceiver(broadcastReceiver, IntentFilter(UPDATE_ACTION))
-        startService(startServiceIntent)
     }
 
     private fun setWeather(weather: Weather) {
@@ -54,7 +60,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<ImageView>(R.id.icon).setBackgroundResource(getIcon(weather.icon))
         findViewById<TextView>(R.id.description).text = weather.description
         tempTv.text =
-            weather.temp.minus(273.15).roundToInt().toString()
+            weather.temp.roundToInt().toString()
         findViewById<TextView>(R.id.city_name).text = weather.name
         findViewById<TextView>(R.id.weather_date).text = weather.dateTime
     }
@@ -89,4 +95,32 @@ class MainActivity : AppCompatActivity() {
         return R.drawable.ic_01d //todo Заглушка иконки на случай ошибки
     }
 
+    private fun getLastLocation() {
+        // Проверка разрешений перед запросом
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                100
+            )
+            return
+        }
+
+        // Получение координат
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                startServiceIntent = Intent(this, UpdateService::class.java).apply {
+                    putExtra("lat", location.latitude)
+                    putExtra("lon", location.longitude)
+                }
+                startService(startServiceIntent)
+            } else {
+                // Местоположение может быть null, если GPS выключен или это новый девайс
+            }
+        }
+    }
 }

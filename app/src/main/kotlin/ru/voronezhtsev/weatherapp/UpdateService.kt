@@ -25,8 +25,10 @@ class UpdateService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val lat = intent?.getDoubleExtra("lat", 0.0) ?: 0.0
+        val lon = intent?.getDoubleExtra("lon", 0.0) ?: 0.0
         job = serviceScope.launch {
-            update()
+            update(lat, lon)
         }
         return super.onStartCommand(intent, flags, startId)
     }
@@ -36,12 +38,12 @@ class UpdateService : Service() {
         job.cancel()
     }
 
-    private suspend fun update() {
+    private suspend fun update(latitude: Double, longitude: Double) {
         val intent = Intent(UPDATE_ACTION)
         while (job.isActive) {
             serviceScope.launch {
                 try {
-                    val response = weatherService.load()
+                    val response = weatherService.load(latitude, longitude)
                     weatherDatabase.weatherDao().insert(
                         Weather(
                             1,
